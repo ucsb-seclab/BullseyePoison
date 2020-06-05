@@ -1,0 +1,10 @@
+**/data/*
+**/datasets/
+**/checkpoint*
+**__pycache__*
+aws/*
+eric/*
+**.DS_Store
+**.idea
+**.tgz
+venv/
