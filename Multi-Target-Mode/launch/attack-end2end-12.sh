@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+python craft_poisons_transfer.py --gpu $1 --mode $2 --target-index $3 --net-repeat $4 --target-num $5 --subs-chk-name ckpt-%s-4800-dp0.200-droplayer0.000-seed1226.t7 ckpt-%s-4800-dp0.250-droplayer0.000-seed1226.t7 ckpt-%s-4800-dp0.300-droplayer0.000.t7 --subs-dp 0.2 0.25 0.3  --substitute-nets DPN92 SENet18 ResNet50 ResNeXt29_2x64d --target-label 1 --poison-label 6 --end2end True --retrain-lr 1e-4 --chk-path attack-results/100-overlap/end2end-training --retrain-wd 5e-4 --victim-net DPN92
