@@ -19,9 +19,9 @@ In addition to these substitute networks, we release the (missing) networks that
 The experiments have been done using PyTorch-v1.3.1 over Cuda 10.1. We ran all the attacks using NVIDIA Titan RTX graphics cards.
 
 ## Prerequisites
-Before anything, download our datasets from [here](https://drive.google.com/file/d/1Q5aPrOu8bus8H9_3pTdFBn0xl5vAlVf7/view?usp=sharing), which contains the split of CIFAR10 dataset and the [Multi-View Car Dataset](https://www.epfl.ch/labs/cvlab/data/data-pose-index-php/).
+Before anything, download our datasets from [here](https://drive.google.com/file/d/1wVRobdlwvD9-VL9mYKCu_onq8PbbyP0V/view?usp=sharing), which contains the split of CIFAR10 dataset and the [Multi-View Car Dataset](https://www.epfl.ch/labs/cvlab/data/data-pose-index-php/).
 
-Then, download the substitute and victim models that we used for our experiments from [here](https://drive.google.com/file/d/12YH4Fd8WhZyZDDWvXaTj5qJfNAIB2Baj/view?usp=sharing).
+Then, download the substitute and victim models that we used for our experiments from [here](https://drive.google.com/file/d/1TwxNbJ1arDNQrBJdt5AFeaAbKC65HOko/view?usp=sharing).
 You can also train any model with train_cifar10_models.py where models/* modules are originally coming from [kuangliu](https://github.com/kuangliu/pytorch-cifar.git).
 One example is:
 ```bash
@@ -96,8 +96,8 @@ python launch/run_attack_fixedcoeffs.py
 **5.** Until now, we how to run the experiments in single-target mode. Now it's the time for multi-target mode. Go to [here](Multi-Target-Mode).
 
 ## Results
-To make your life easier and to save you time/money, you can find all the detailed results of our experiments [here](https://drive.google.com/file/d/1acoiCk-P1T-V1OumEPTDz3nTu9tpxDH1/view?usp=sharing).
-The results for multi-target mode can be downloaded from [here](https://drive.google.com/file/d/1xMdzbi3ktVtipk8pqxkzQ28ajOHEnqEK/view?usp=sharing). To be consistent with the code, you need to decompress this in the `Multi-Target-Mode` folder.
+To make your life easier and to save you time/money, you can find all the detailed results of our experiments [here](https://drive.google.com/file/d/1mbQs239HVxnOLHdh1I2lE1B3zsmaBSO3/view?usp=sharing).
+The results for multi-target mode can be downloaded from [here](https://drive.google.com/file/d/13p24HnylrDLPIv3EHv7VGvwJgbqqctSg/view?usp=sharing). To be consistent with the code, you need to decompress this in the `Multi-Target-Mode` folder.
 You just need to be patient, as the logs are not in the perfect format. :)
 
 ##  If you have questions, feel free to reach us.
