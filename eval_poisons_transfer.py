@@ -253,6 +253,7 @@ if __name__ == '__main__':
     parser.add_argument('--subset-group', default=0, type=int)
 
     # Parameters for poisons
+    parser.add_argument('--target-dset', default='cifar10', choices=['cifar10', '102flowers'])
     parser.add_argument('--target-label', default=6, type=int)
     parser.add_argument('--target-index-start', default=0, type=int,
                         help='first index of the targets')
@@ -330,8 +331,13 @@ if __name__ == '__main__':
                 if target is not None:
                     target_camera_tuple.append([target, print_size])
 
-        target = fetch_target(args.target_label, target_idx, 50, subset='others',
-                              path=args.train_data_path, transforms=transform_test)
+        if args.target_dset == 'cifar10':
+            target = fetch_target(args.target_label, target_idx, 50, subset='others',
+                                  path=args.train_data_path, transforms=transform_test)
+        elif args.target_dset == '102flowers':
+            from utils import fetch_target_102flower_dset
+            assert args.target_label == -1
+            target = fetch_target_102flower_dset(target_idx, transform_test)
 
         json_res_path = '{}/{}/eval-retrained-for-{}epochs.json'.format(args.eval_poisons_root,
                                                                         target_idx, args.retrain_epochs)
@@ -356,6 +362,7 @@ if __name__ == '__main__':
         else:
             ites = [1, 51, 101, 201, 301, 501, 701, 1101, 1500] # for experiment transferabiltiy to different training sets
             # ites = [1, 51, 101, 201, 301, 401, 601, 801, 1201, 1601, 2001, 2401, 3201, 4000]
+        ites = [800]
         no_save = True
         for ite in ites[::-1]:
             if ite in all_res['targets'][str(target_idx)]:

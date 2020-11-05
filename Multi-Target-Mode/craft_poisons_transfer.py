@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("../")
 import torch.backends.cudnn as cudnn
 import torchvision
@@ -46,7 +47,7 @@ if __name__ == '__main__':
                         help='Dropout for the substitute nets, will be turned on for both training and testing')
 
     # Parameters for poisons
-    parser.add_argument('--target-path', default='../datasets/epfl-gims08/resized-betterMaybe/tripod_seq', type=str,
+    parser.add_argument('--target-path', default='../datasets/epfl-gims08/resized/tripod_seq', type=str,
                         help='path to the external images')
     parser.add_argument('--target-index', default=6, type=int,
                         help='model of the car in epfl-gims08 dataset')
@@ -230,7 +231,8 @@ if __name__ == '__main__':
                                          std=torch.Tensor(cifar_std).reshape(1, 3, 1, 1),
                                          decay_ratio=args.poison_decay_ratio, chk_path=chk_path, end2end=args.end2end,
                                          poison_idxes=base_idx_list, poison_label=args.poison_label, mode=args.mode,
-                                         tol=args.tol, start_ite=args.resume_poison_ite, poison_init=poison_init, net_repeat=args.net_repeat)
+                                         tol=args.tol, start_ite=args.resume_poison_ite, poison_init=poison_init,
+                                         net_repeat=args.net_repeat)
 
         tt = time.time()
 

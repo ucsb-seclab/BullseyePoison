@@ -1,7 +1,7 @@
 from models import *
 from PIL import Image, ExifTags
 import os
-
+import cv2
 
 def load_pretrained_net(net_name, chk_name, model_chk_path, test_dp=0, bdp=0, device='cuda'):
     """
@@ -81,6 +81,15 @@ def fetch_camera_target(target_index, target_print_size, transforms):
         print(path)
         # assert False
         return None
+
+
+def fetch_target_102flower_dset(target_index, transforms, path='datasets/102flowers'):
+    target_path = '%s/image_%05d.jpg' % (path, target_index)
+    assert os.path.exists(target_path)
+    img = crop_resize_opencv(target_path)
+    img = img[:, :, :3]
+    img = transforms(img)[None, :, :, :]
+    return img
 
 
 def fetch_target(target_label, target_index, start_idx, path, subset, transforms):

@@ -95,19 +95,19 @@ def compare_with_baseline(paths, methods, plot_root_path, retrain_epochs):
     for attack_accs1 in attack_accs:
         attack_accs1['meanVictim'] = attack_accs1.mean(axis=1)
 
-    MAX_ACC = 75
+    MAX_ACC = 70
     # plot avg. attack acc., one per each victim's network
     for counter, victim in enumerate(victims + ['meanVictim']):
         if victim == 'meanVictim':
-            plt.figure(figsize=(5, 2.5), dpi=400)
+            plt.figure(figsize=(8, 5), dpi=400)
         else:
-            plt.figure(figsize=(6, 3), dpi=400)
+            plt.figure(figsize=(8, 5), dpi=400)
         ax = plt.subplot(111)
         if victim == 'meanVictim':
-            ax.set_xlabel('Iterations', fontsize=LABELSIZE - 2)
+            # ax.set_xlabel('Iterations', fontsize=LABELSIZE - 2)
             ax.set_ylabel('Attack Success Rate', fontsize=LABELSIZE - 2)
         elif counter == 0:
-            ax.set_xlabel('Iterations', fontsize=LABELSIZE)
+            # ax.set_xlabel('Iterations', fontsize=LABELSIZE)
             ax.set_ylabel('Attack Success Rate', fontsize=LABELSIZE)
         ax.grid(color='black', linestyle='dotted', linewidth=0.5)
         ax.set_ylim([0, MAX_ACC])
@@ -214,7 +214,7 @@ if __name__ == "__main__":
     retrain_epochs = 60
     plots_root_path = 'analysis-results/BP-alternatives-fixedcoeffs/linear-transfer-learning'
 
-    paths = ['attack-results/BP-alternatives-fixedcoeffs/linear-transfer-learning/coeffs_fixed_type_{}'.format(ty) for ty in TYPES]
+    paths = ['attack-results/BP-alternatives-fixedcoeffs-notrandom/linear-transfer-learning/coeffs_fixed_type_{}'.format(ty) for ty in TYPES]
     methods = [ty for ty in TYPES]
 
     from plot_polytopes import plot_diff_combinations

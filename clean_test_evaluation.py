@@ -25,6 +25,38 @@ class Logger(object):
         pass
 
 
+class SubstituteNets:
+    def __init__(self, model_resume_path, subs_chk_name, substitute_nets, subs_dp):
+        # load the pre-trained models
+        self.subs_dp = subs_dp
+        self.subs_chk_name = subs_chk_name
+        self.substitute_nets = substitute_nets
+        self.model_resume_path = model_resume_path
+        self._load_models_from_disk()
+
+        print("subs nets, effective num: {}".format(len(self.models)))
+
+    def reload_models(self):
+        self._load_models_from_disk()
+        print("All {} substitute models are reloaded from the disk!".format(len(self.models)))
+
+    def _load_models_from_disk(self):
+        # load the pre-trained models
+        sub_net_list = []
+        for n_chk, chk_name in enumerate(self.subs_chk_name):
+            for snet in self.substitute_nets:
+                if args.subs_dp[n_chk] > 0.0:
+                    net = load_pretrained_net(snet, chk_name, model_chk_path=self.model_resume_path,
+                                              test_dp=self.subs_dp[n_chk])
+                elif self.subs_dp[n_chk] == 0.0:
+                    net = load_pretrained_net(snet, chk_name, model_chk_path=self.model_resume_path)
+                else:
+                    assert False
+                sub_net_list.append(net)
+
+        self.models = sub_net_list
+
+
 if __name__ == '__main__':
     # ======== arg parser =================================================
     parser = argparse.ArgumentParser(description='PyTorch Poison Attack')
@@ -34,7 +66,7 @@ if __name__ == '__main__':
                         help="Whether to consider an end-to-end victim")
     parser.add_argument('--substitute-nets', default=['ResNet50', 'ResNet18'], nargs="+", required=False)
     parser.add_argument('--target-net', default=["DenseNet121"], nargs="+", type=str)
-    parser.add_argument('--model-resume-path', default='model-chks', type=str,
+    parser.add_argument('--model-resume-path', default='model-chks-release', type=str,
                         help="Path to the pre-trained models")
     parser.add_argument('--net-repeat', default=1, type=int)
     parser.add_argument("--subs-chk-name", default=['ckpt-%s-4800.t7'], nargs="+", type=str)
@@ -43,7 +75,6 @@ if __name__ == '__main__':
                         help='Dropout for the substitute nets, will be turned on for both training and testing')
 
     # Parameters for poisons
-    parser.add_argument('--target-dset', default='cifar10', choices=['cifar10', '102flowers'])
     parser.add_argument('--target-label', default=6, type=int)
     parser.add_argument('--target-index', default=1, type=int,
                         help='index of the target sample')
@@ -99,28 +130,28 @@ if __name__ == '__main__':
 
     parser.add_argument('--mode', default='convex', type=str,
                         help='if convex, run the convexpolytope attack proposed by the paper, otherwise just run the mean shifting thing')
+    parser.add_argument('--retrain-subs-nets', default=False, type=bool,
+                        help="It only matters in end2end training mode. If set to True, it means we update the "
+                             "substitute models every few steps. Unlike the Convex Polytope attack, We do not apply "
+                             "CP loss to multiple layers! ")
     parser.add_argument('--device', default='cuda', type=str)
     args = parser.parse_args()
+
+    if args.retrain_subs_nets:
+        assert args.end2end
 
     # Set visible CUDA devices
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     cudnn.benchmark = True
 
-    # load the pre-trained models
-    sub_net_list = []
+    nets = []
     for n_chk, chk_name in enumerate(args.subs_chk_name):
         for snet in args.substitute_nets:
-            if args.subs_dp[n_chk] > 0.0:
-                net = load_pretrained_net(snet, chk_name, model_chk_path=args.model_resume_path,
-                                          test_dp=args.subs_dp[n_chk])
-            elif args.subs_dp[n_chk] == 0.0:
-                net = load_pretrained_net(snet, chk_name, model_chk_path=args.model_resume_path)
-            else:
-                assert False
-            sub_net_list.append(net)
+            net = load_pretrained_net(snet, chk_name, model_chk_path=args.model_resume_path)
+            nets.append(net)
 
-    print("subs nets, effective num: {}".format(len(sub_net_list)))
+    subs_nets = SubstituteNets(args.model_resume_path, args.subs_chk_name, args.substitute_nets, args.subs_dp)
 
     print("Loading the victims networks")
     targets_net = []
@@ -135,98 +166,22 @@ if __name__ == '__main__':
         transforms.Normalize(cifar_mean, cifar_std),
     ])
 
-    # Get the target image
-    if args.target_dset == 'cifar10':
-        target = fetch_target(args.target_label, args.target_index, 50, subset='others',
-                              path=args.train_data_path, transforms=transform_test)
-    elif args.target_dset == '102flowers':
-        from utils import fetch_target_102flower_dset
+    testset = torchvision.datasets.CIFAR10(root=args.dset_path, train=False, download=True, transform=transform_test)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=500)
 
-        target = fetch_target_102flower_dset(args.target_index, transforms)
+    for n_chk, chk_name in enumerate(args.subs_chk_name):
+        for net_name in args.nets:
+            net = load_pretrained_net(snet, chk_name, model_chk_path=args.model_resume_path)
+            # Evaluate the results on the clean test set
+            val_acc_meter = AverageMeter()
+            with torch.no_grad():
+                for ite, (input, target) in enumerate(test_loader):
+                    input, target = input.to('cuda'), target.to('cuda')
 
-    if args.mode == 'mean':
-        chk_path = os.path.join(args.chk_path, 'mean')
-    else:
-        chk_path = os.path.join(args.chk_path, args.mode)
-    if args.net_repeat > 1:
-        chk_path = '{}-{}Repeat'.format(chk_path, args.net_repeat)
-    chk_path = os.path.join(chk_path, str(args.poison_ites))
-    chk_path = os.path.join(chk_path, str(args.target_index))
-    if not os.path.exists(chk_path):
-        os.makedirs(chk_path)
-    import sys
+                    output = net(input)
 
-    sys.stdout = Logger('{}/log.txt'.format(chk_path))
-    # Load or craft the poison!
-    if args.eval_poison_path != "":
-        state_dict = torch.load(args.eval_poison_path)
-        poison_tuple_list, base_idx_list = state_dict['poison'], state_dict['idx']
-        print("=" * 100)
-        print("=" * 100)
-        print("Poisons loaded")
-        print("Now evaluating on the target nets")
-        t = 0
-        tt = 0
-    else:
-        print(args)
-        print("Path: {}".format(chk_path))
-        # Otherwise, we craft new poisons
-        if args.nearest:
-            base_tensor_list, base_idx_list = fetch_nearest_poison_bases(sub_net_list, target, args.poison_num,
-                                                                         args.poison_label, args.num_per_class,
-                                                                         'others',
-                                                                         args.train_data_path, transform_test)
+                    prec1 = accuracy(output, target)[0]
+                    val_acc_meter.update(prec1.item(), input.size(0))
 
-        else:
-            # just fetch the first poison_num samples
-            base_tensor_list, base_idx_list = fetch_poison_bases(args.poison_label, args.poison_num, subset='others',
-                                                                 path=args.train_data_path, transforms=transform_test)
-        base_tensor_list = [bt.to('cuda') for bt in base_tensor_list]
-        print("Selected base image indices: {}".format(base_idx_list))
 
-        if args.resume_poison_ite > 0:
-            state_dict = torch.load(os.path.join(chk_path, "poison_%05d.pth" % args.resume_poison_ite))
-            poison_tuple_list, base_idx_list = state_dict['poison'], state_dict['idx']
-            poison_init = [pt.to('cuda') for pt, _ in poison_tuple_list]
-            # re-direct the results to the resumed dir...
-            chk_path += '-resume'
-            if not os.path.exists(chk_path):
-                os.makedirs(chk_path)
-        else:
-            poison_init = base_tensor_list
-
-        import time
-
-        t = time.time()
-        poison_tuple_list = make_convex_polytope_poisons(sub_net_list, target_net, base_tensor_list,
-                                                         target, device='cuda', opt_method=args.poison_opt,
-                                                         lr=args.poison_lr, momentum=args.poison_momentum,
-                                                         iterations=args.poison_ites, epsilon=args.poison_epsilon,
-                                                         decay_ites=args.poison_decay_ites,
-                                                         decay_ratio=args.poison_decay_ratio,
-                                                         mean=torch.Tensor(cifar_mean).reshape(1, 3, 1, 1),
-                                                         std=torch.Tensor(cifar_std).reshape(1, 3, 1, 1),
-                                                         chk_path=chk_path, poison_idxes=base_idx_list,
-                                                         poison_label=args.poison_label,
-                                                         tol=args.tol,
-                                                         end2end=args.end2end,
-                                                         start_ite=args.resume_poison_ite,
-                                                         poison_init=poison_init,
-                                                         mode=args.mode,
-                                                         net_repeat=args.net_repeat)
-        tt = time.time()
-
-    res = []
-    print("Evaluating against victims networks")
-    for tnet, tnet_name in zip(targets_net, args.target_net):
-        print(tnet_name)
-        pred = train_network_with_poison(tnet, target, poison_tuple_list, base_idx_list, chk_path, args,
-                                         save_state=False)
-        res.append(pred)
-        print("--------")
-
-    print("------SUMMARY------")
-    print("TIME ELAPSED (mins): {}".format(int((tt - t) / 60)))
-    print("TARGET INDEX: {}".format(args.target_index))
-    for tnet_name, r in zip(args.target_net, res):
-        print(tnet_name, int(r == args.poison_label))
+        print(net_name, chk_name, val_acc_meter.item())

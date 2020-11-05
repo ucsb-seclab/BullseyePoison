@@ -146,13 +146,13 @@ def plot_attack_avg_stats_over_ites(poisons_root_path, res, target_ids, print_xy
         os.mkdir(plot_root_path)
 
     # plot avg. attack acc.
-    plt.figure(figsize=(8, 4), dpi=400)
+    plt.figure(figsize=(8, 5), dpi=400)
     ax = plt.subplot(111)
     if print_xylabels:
         ax.set_xlabel('Iterations', fontsize=LABELSIZE)
         ax.set_ylabel('Avg. Attack Accuracy', fontsize=LABELSIZE)
     ax.grid(color='black', linestyle='dotted', linewidth=0.5)
-    ax.set_ylim([0, 80])
+    ax.set_ylim([0, 100])
     for victim in victims:
         ax.plot(ites, attack_accs[victim], label=victim, color=VICTIMS_COLORS[victim], linewidth=1.5
                 , linestyle=VICTIMS_LINESTYLES[victim])
@@ -166,6 +166,11 @@ def plot_attack_avg_stats_over_ites(poisons_root_path, res, target_ids, print_xy
     plt.xticks(rotation=90)
     plt.savefig('{}/attack-acc-avg.pdf'.format(plot_root_path), bbox_inches='tight')
     plt.close()
+
+    print("Mean Attack Acc.")
+    for ite in ites:
+        attack_acc_avg = sum([attack_accs[victim][ite] for victim in victims]) / len(victims)
+        print("ite: {}, attack_acc_avg: {:.2f}".format(ite, attack_acc_avg))
 
     # plot avg. (malicious) class score.
     plt.figure(figsize=(6, 4), dpi=400)
@@ -203,6 +208,11 @@ def plot_attack_avg_stats_over_ites(poisons_root_path, res, target_ids, print_xy
     plt.savefig('{}/clean-acc-avg.pdf'.format(plot_root_path), bbox_inches='tight')
     plt.close()
 
+    print("Mean Clean Test Acc.")
+    for ite in ites:
+        test_acc_avg = sum([clean_acc[victim][ite] for victim in victims]) / len(victims)
+        print("ite: {}, attack_acc_avg: {:.2f}".format(ite, test_acc_avg))
+
     # plot avg. time
     plt.figure(figsize=(6, 4), dpi=400)
     ax = plt.subplot(111)
@@ -221,6 +231,16 @@ def plot_attack_avg_stats_over_ites(poisons_root_path, res, target_ids, print_xy
     plt.savefig('{}/time.pdf'.format(plot_root_path), bbox_inches='tight')
     plt.close()
 
+    print("Poisons Classification Acc.")
+    for ite in ites:
+        poison_acc_tmp = []
+        for victim in victims:
+            vals = [res['targets'][t_id][ite]['victims'][victim]['poisons predictions'] for t_id in target_ids]
+            vals = [(100.0 * sum([v == poison_label for v in val])) / len(val) for val in vals]
+            poison_acc_tmp.append(sum(vals) / len(vals))
+        poison_acc_tmp = sum(poison_acc_tmp) / len(victims)
+        print("ite: {}, poison_acc: {}".format(ite, poison_acc_tmp))
+
     #  plot coeffs dist
     if 'end2end' not in poisons_root_path:
         plot_coeffs_dist(coeffs, ites, plot_root_path)
@@ -230,9 +250,9 @@ if __name__ == '__main__':
     import sys
     epochs = sys.argv[1]
     paths = sys.argv[2:]
-    assert 'convex' in paths[0]
-    assert len(paths) <= 1 or ('mean' in paths[1] and 'mean-' not in paths[1])
-    assert len(paths) <= 2 or 'mean-' in paths[2]
+    # assert 'convex' in paths[0]
+    # assert len(paths) <= 1 or ('mean' in paths[1] and 'mean-' not in paths[1])
+    # assert len(paths) <= 2 or 'mean-' in paths[2]
 
     print("NOTE THAT WE ARE EVALUATING THE CASE THAT THE VICTIMS ARE RETRAINED FOR {} EPOCHS"
           .format(epochs))

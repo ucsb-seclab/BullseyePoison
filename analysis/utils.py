@@ -19,9 +19,15 @@ COEFFS_LABELS = {'c1': r'$c_1$ - greatest coefficient', 'c2': r'$c_2$', 'c3': r'
                  'c5': r'$c_5$ - lowest coefficient'}
 
 
-def read_attack_stats(poisons_root_path, retrain_epochs):
-    filename = 'eval-retrained-for-{}epochs.json'.format(retrain_epochs)
-    all_res = {'targets': {}}
+def read_attack_stats(poisons_root_path, retrain_epochs, sgd=False, dropout=0.0):
+    ext = ''
+    if sgd:
+        ext += '-sgd'
+    if dropout > 0.0:
+        ext += '-dropout{}'.format(dropout)
+
+    filename = 'eval-retrained-for-{}epochs{}.json'.format(retrain_epochs, ext)
+    all_res = {'targets': {}, 'sgd': sgd, 'dropout': dropout, 'epochs': retrain_epochs}
     print(poisons_root_path)
     for root, _, files in os.walk(poisons_root_path):
         for f in files:

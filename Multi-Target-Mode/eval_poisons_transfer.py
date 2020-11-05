@@ -7,8 +7,8 @@ import torchvision.transforms as transforms
 import argparse
 import os
 from models import *
-from utils import load_pretrained_net, fetch_all_external_targets
 from dataloader import PoisonedDataset, FeatureSet
+from utils import load_pretrained_net, fetch_all_external_targets
 import json
 import time
 import sys
@@ -272,7 +272,7 @@ if __name__ == '__main__':
                         help="Whether to consider an end-to-end victim")
     parser.add_argument('--victim-net', default=["DenseNet121"], nargs="+", type=str)
     parser.add_argument("--test-chk-name", default='ckpt-%s-4800.t7', type=str)
-    parser.add_argument('--model-resume-path', default='../ConvexPolytopePosioning/model-chks', type=str,
+    parser.add_argument('--model-resume-path', default='../model-chks', type=str,
                         help="Path to the pre-trained models")
     parser.add_argument('--subset-group', default=0, type=int)
 
@@ -287,7 +287,7 @@ if __name__ == '__main__':
     parser.add_argument('--poison-step', default=50, type=int,
                         help='iterations for making poison')
 
-    parser.add_argument('--target-path', default='datasets/epfl-gims08/resized-betterMaybe/tripod_seq', type=str,
+    parser.add_argument('--target-path', default='../datasets/epfl-gims08/resized/tripod_seq', type=str,
                         help='path to the external images')
     parser.add_argument('--target-subset', default=6, type=int,
                         help='model of the car in epfl-gims08 dataset')
@@ -316,7 +316,7 @@ if __name__ == '__main__':
     # Checkpoints and resuming
     parser.add_argument('--eval-poisons-root', default='', type=str,
                         help="Root folder containing poisons crafted for the targets")
-    parser.add_argument('--train-data-path', default='datasets/CIFAR10_TRAIN_Split.pth', type=str,
+    parser.add_argument('--train-data-path', default='../datasets/CIFAR10_TRAIN_Split.pth', type=str,
                         help='path to the official datasets')
     parser.add_argument('--dset-path', default='datasets', type=str,
                         help='path to the official datasets')
@@ -386,7 +386,7 @@ if __name__ == '__main__':
         if 'convex' in args.eval_poisons_root:
             ites = [1, 51, 101, 201, 301, 401, 601, 801, 1000]
         else:
-            ites = [1, 51, 101, 201, 301, 401, 601, 801, 1001]
+            ites = [1, 51, 101, 201, 301, 401, 601, 801, 1000]
     # ites = [1, 51, 101, 201, 301, 401, 601, 801, 1201, 1601, 2001, 2401, 3201, 4000]
     # if args.poison_ites not in ites:
     #     ites.append(args.poison_ites)

@@ -318,6 +318,7 @@ def make_convex_polytope_poisons(subs_net_list, target_net, base_tensor_list, ta
         poisons_time += int(time.time() - t)
 
         # clip the perturbations into the range
+        assert epsilon == 0.1
         perturb_range01 = torch.clamp((poison_batch.poison.data - base_tensor_batch) * std, -epsilon, epsilon)
         perturbed_range01 = torch.clamp(base_range01_batch.data + perturb_range01.data, 0, 1)
         poison_batch.poison.data = (perturbed_range01 - mean) / std
