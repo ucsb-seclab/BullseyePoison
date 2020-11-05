@@ -38,7 +38,7 @@ if __name__ == '__main__':
                         help="Whether to consider an end-to-end victim")
     parser.add_argument('--substitute-nets', default=['ResNet50', 'ResNet18'], nargs="+", required=False)
     parser.add_argument('--victim-net', default=["DenseNet121"], nargs="+", type=str)
-    parser.add_argument('--model-resume-path', default='../model-chks', type=str,
+    parser.add_argument('--model-resume-path', default='../model-chks-release', type=str,
                         help="Path to the pre-trained models")
     parser.add_argument('--net-repeat', default=1, type=int)
     parser.add_argument("--subs-chk-name", default=['ckpt-%s-4800.t7'], nargs="+", type=str)
